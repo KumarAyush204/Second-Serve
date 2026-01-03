@@ -17,8 +17,7 @@ const router = express.Router(); // ADDED ROUTER
 
 // FIX VIEW ENGINE PATH
 app.set('view engine', 'ejs');
-app.set('views', path.join(__dirname, '../views')); 
-
+app.set('views', require('path').join(process.cwd(), 'views'));
 app.use(bodyParser.urlencoded({ extended: true }));
 
 // SESSION CONFIG
@@ -81,7 +80,7 @@ router.get("/ngoHomepage", function(req, res) {
     if (req.isAuthenticated() && req.user.role == "ngo") {
         res.render('ngo-homepage', { user: req.user });
     } else {
-        res.redirect("/.netlify/functions/api/ngoLogin"); // Note the path adjustment
+        res.redirect("/.netlify/functions/app/ngoLogin"); // Note the path adjustment
     }
 });
 
@@ -92,10 +91,10 @@ router.get("/ngoRestaurants", async function(req, res) {
             const restaurants = await model.RESTAURANT.find({});
             res.render('ngo-restaurants', { orders: orders, restaurants: restaurants, user: req.user });
         } catch (err) {
-            res.redirect("/.netlify/functions/api/ngoHomepage");
+            res.redirect("/.netlify/functions/app/ngoHomepage");
         }
     } else {
-        res.redirect("/.netlify/functions/api/ngoLogin");
+        res.redirect("/.netlify/functions/app/ngoLogin");
     }
 });
 
@@ -104,8 +103,8 @@ router.get("/ngoLogin", function(req, res) {
 });
 
 router.post("/ngoLogin", passport.authenticate('ngo', {
-    successRedirect: "/.netlify/functions/api/ngoHomepage",
-    failureRedirect: "/.netlify/functions/api/ngoLogin"
+    successRedirect: "/.netlify/functions/app/ngoHomepage",
+    failureRedirect: "/.netlify/functions/app/ngoLogin"
 }));
 
 router.post("/ngoRegister", function(req, res) {
@@ -120,10 +119,10 @@ router.post("/ngoRegister", function(req, res) {
     model.NGO.register(newNGO, req.body.nPassword, function(err, user) {
         if (err) {
             console.log(err);
-            return res.redirect("/.netlify/functions/api/ngoLogin");
+            return res.redirect("/.netlify/functions/app/ngoLogin");
         } else {
             passport.authenticate('ngo')(req, res, function() {
-                res.redirect('/.netlify/functions/api/ngoHomepage');
+                res.redirect('/.netlify/functions/app/ngoHomepage');
             });
         }
     });
@@ -134,7 +133,7 @@ router.get("/restaurant", function(req, res) {
     if (req.isAuthenticated() && req.user.role == "restaurant") {
         res.render('restaurant-homepage', { user: req.user });
     } else {
-        res.redirect("/.netlify/functions/api/restaurantLogin");
+        res.redirect("/.netlify/functions/app/restaurantLogin");
     }
 });
 
@@ -143,8 +142,8 @@ router.get("/restaurantLogin", function(req, res) {
 });
 
 router.post("/restaurantLogin", passport.authenticate('restaurant', {
-    successRedirect: "/.netlify/functions/api/restaurant",
-    failureRedirect: "/.netlify/functions/api/restaurantLogin"
+    successRedirect: "/.netlify/functions/app/restaurant",
+    failureRedirect: "/.netlify/functions/app/restaurantLogin"
 }));
 
 router.post("/restaurantRegister", function(req, res) {
@@ -159,10 +158,10 @@ router.post("/restaurantRegister", function(req, res) {
     model.RESTAURANT.register(newRestaurant, req.body.rPassword, function(err, user) {
         if (err) {
             console.log(err);
-            return res.redirect("/.netlify/functions/api/restaurantLogin");
+            return res.redirect("/.netlify/functions/app/restaurantLogin");
         } else {
             passport.authenticate('restaurant')(req, res, function() {
-                res.redirect('/.netlify/functions/api/restaurant');
+                res.redirect('/.netlify/functions/app/restaurant');
             });
         }
     });
@@ -174,7 +173,7 @@ router.get("/createOrder", function(req, res) {
         const successMessage = req.flash('success');
         res.render('restaurant-createOrder', { successMessage: successMessage });
     } else {
-        res.redirect("/.netlify/functions/api/restaurantLogin");
+        res.redirect("/.netlify/functions/app/restaurantLogin");
     }
 });
 
@@ -189,12 +188,12 @@ router.post('/food-order', async function(req, res) {
             });
             await newOrder.save();
             req.flash('success', 'Order successfully created!');
-            res.redirect("/.netlify/functions/api/createOrder");
+            res.redirect("/.netlify/functions/app/createOrder");
         } catch (err) {
-            res.redirect("/.netlify/functions/api/createOrder");
+            res.redirect("/.netlify/functions/app/createOrder");
         }
     } else {
-        res.redirect("/.netlify/functions/api/restaurantLogin");
+        res.redirect("/.netlify/functions/app/restaurantLogin");
     }
 });
 
@@ -205,10 +204,10 @@ router.get("/rorderHistory", async function(req, res) {
             const ngos = await model.NGO.find({});
             res.render('restaurant-orderHistory', { orders: orders, ngos: ngos });
         } catch (err) {
-            res.redirect("/.netlify/functions/api/restaurant");
+            res.redirect("/.netlify/functions/app/restaurant");
         }
     } else {
-        res.redirect("/.netlify/functions/api/restaurantLogin");
+        res.redirect("/.netlify/functions/app/restaurantLogin");
     }
 });
 
@@ -219,56 +218,56 @@ router.get("/norderHistory", async function(req, res) {
             const restaurants = await model.RESTAURANT.find({});
             res.render('ngo-ordersHistory', { orders: orders, restaurants: restaurants });
         } catch (err) {
-            res.redirect("/.netlify/functions/api/ngoHomepage");
+            res.redirect("/.netlify/functions/app/ngoHomepage");
         }
     } else {
-        res.redirect("/.netlify/functions/api/ngoLogin");
+        res.redirect("/.netlify/functions/app/ngoLogin");
     }
 });
 
 router.get("/acceptOrder/:orderid", async function(req, res) {
     if (req.isAuthenticated() && req.user.role == "ngo") {
         await model.FOODORDER.findOneAndUpdate({ _id: req.params.orderid }, { $set: { status: "claimed", ngoid: req.user.id } });
-        res.redirect("/.netlify/functions/api/ngoRestaurants");
+        res.redirect("/.netlify/functions/app/ngoRestaurants");
     } else {
-        res.redirect("/.netlify/functions/api/ngoLogin");
+        res.redirect("/.netlify/functions/app/ngoLogin");
     }
 });
 
 router.get("/cancelOrder/:orderid", async function(req, res) {
     if (req.isAuthenticated() && req.user.role == "ngo") {
         await model.FOODORDER.findOneAndUpdate({ _id: req.params.orderid }, { $set: { status: "available" }, $unset: { ngoid: 1 } });
-        res.redirect("/.netlify/functions/api/ngoRestaurants");
+        res.redirect("/.netlify/functions/app/ngoRestaurants");
     } else {
-        res.redirect("/.netlify/functions/api/ngoLogin");
+        res.redirect("/.netlify/functions/app/ngoLogin");
     }
 });
 
 router.get("/completeOrder/:orderid", async function(req, res) {
     if (req.isAuthenticated() && req.user.role == "restaurant") {
         await model.FOODORDER.findOneAndUpdate({ _id: req.params.orderid }, { $set: { status: "completed" } });
-        res.redirect("/.netlify/functions/api/rorderHistory");
+        res.redirect("/.netlify/functions/app/rorderHistory");
     } else {
-        res.redirect("/.netlify/functions/api/restaurantLogin");
+        res.redirect("/.netlify/functions/app/restaurantLogin");
     }
 });
 
 router.get("/deleteOrder/:orderid", async function(req, res) {
     if (req.isAuthenticated() && req.user.role == "restaurant") {
         await model.FOODORDER.deleteOne({ _id: req.params.orderid });
-        res.redirect("/.netlify/functions/api/rorderHistory");
+        res.redirect("/.netlify/functions/app/rorderHistory");
     } else {
-        res.redirect("/.netlify/functions/api/restaurantLogin");
+        res.redirect("/.netlify/functions/app/restaurantLogin");
     }
 });
 
 router.get("/logout/:role", (req, res, next) => {
     req.logout(function(err) {
         if (err) { return next(err); }
-        res.redirect("/.netlify/functions/api/");
+        res.redirect("/.netlify/functions/app/");
     });
 });
 
 // ATTACH ROUTER AND EXPORT
-app.use('/.netlify/functions/api', router);
+app.use('/.netlify/functions/app', router);
 module.exports.handler = serverless(app);
