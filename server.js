@@ -5,7 +5,7 @@ const app=express();
 const mongoose=require('mongoose');
 const model=require('./models/models');
 const flash = require('connect-flash');
-
+require('dotenv').config();
 const session = require("express-session");
 const passport = require("passport");
 const passportLocalMongoose = require("passport-local-mongoose");
@@ -42,9 +42,10 @@ passport.deserializeUser(async (obj, done) => {
   done(null, user);
 });
 
-
-
-mongoose.connect("mongodb://database:27017/donation-app" || "mongodb://localhost:27017/donation-app");
+const mongoURI= process.env.mongoURI;
+console.log(mongoURI);
+mongoose.connect(mongoURI);
+// mongoose.connect("mongodb://database:27017/donation-app" || "mongodb://localhost:27017/donation-app");
 app.get("/",function(req,res){
     res.render('index');
 });
