@@ -270,4 +270,5 @@ router.get("/logout/:role", (req, res, next) => {
 
 // ATTACH ROUTER AND EXPORT
 app.use('/.netlify/functions/app', router);
+app.use('/', router);
 module.exports.handler = serverless(app);
